@@ -17,10 +17,9 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, ShieldCheck, MessageSquarePlus, MessageSquare } from "lucide-react"; 
+import { Loader2, MessageSquarePlus, MessageSquare } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
 import { Timestamp } from 'firebase/firestore';
-import type { UserRole } from "@/types/user";
 import { LoadingScreen } from '@/components/layout/LoadingScreen';
 
 export const maxDuration = 120;
@@ -32,10 +31,6 @@ interface PromptFormValues {
   consultationType?: string;
   performSearch?: boolean;
 }
-
-const DEFAULT_QUERY_LIMIT = 5;
-const VIP_QUERY_LIMIT = 100;
-const ADMIN_DONO_QUERY_LIMIT = Infinity; 
 
 export default function Home() {
   const [isLoadingText, setIsLoadingText] = useState(false); 
@@ -52,39 +47,8 @@ export default function Home() {
   const { toast } = useToast();
   const { currentUser, loading: authLoading } = useAuth();
 
-  const [queryCount, setQueryCount] = useState(0);
-  const [currentQueryLimit, setCurrentQueryLimit] = useState(DEFAULT_QUERY_LIMIT);
-  const [userDisplayRole, setUserDisplayRole] = useState<string>("");
-
-
   useEffect(() => {
-    if (currentUser) {
-      const role: UserRole | undefined = currentUser.role;
-      let limit = DEFAULT_QUERY_LIMIT;
-      let displayRoleText = "";
-
-      if (role === 'vip') {
-        limit = VIP_QUERY_LIMIT;
-        displayRoleText = "(VIP)";
-      } else if (role === 'admin' || role === 'dono') {
-        limit = ADMIN_DONO_QUERY_LIMIT;
-        displayRoleText = role === 'admin' ? "(Admin)" : "(Dono)";
-      }
-      
-      setCurrentQueryLimit(limit);
-      setUserDisplayRole(displayRoleText);
-
-      if (limit !== ADMIN_DONO_QUERY_LIMIT) {
-        const storedCount = localStorage.getItem(`queryCount_${currentUser.uid}`);
-        setQueryCount(storedCount ? parseInt(storedCount, 10) : 0);
-      } else {
-        setQueryCount(0); 
-      }
-
-    } else {
-      setCurrentQueryLimit(DEFAULT_QUERY_LIMIT);
-      setUserDisplayRole("");
-      setQueryCount(0); 
+    if (!currentUser) {
       setActiveChatId(null);
       setMessages([]);
     }
@@ -144,7 +108,7 @@ export default function Home() {
   }, [activeChatId, fetchAndSetMessages]);
 
 
-  const checkQueryLimit = (actionType: 'text' | 'image' | 'investigation' | 'search'): boolean => {
+  const checkUserIsLoggedIn = (actionType: 'text' | 'image' | 'investigation' | 'search'): boolean => {
     if (!currentUser) { 
         if (actionType === 'text' && !activeChatId) return true; 
         toast({
@@ -154,26 +118,7 @@ export default function Home() {
         });
         return false;
     }
-    
-    if (currentQueryLimit === ADMIN_DONO_QUERY_LIMIT) return true;
-
-    if (queryCount >= currentQueryLimit) {
-      toast({
-        title: "Limite de Consultas Atingido",
-        description: `Você atingiu seu limite de ${currentQueryLimit} consultas. ${currentUser.role === 'vip' ? "Seu limite VIP será resetado no próximo ciclo." : "Para mais consultas, considere o status VIP."} (Simulado)`,
-        variant: "destructive",
-      });
-      return false;
-    }
     return true;
-  };
-
-  const incrementQueryCount = () => {
-    if (currentUser && currentQueryLimit !== ADMIN_DONO_QUERY_LIMIT) {
-      const newCount = queryCount + 1;
-      setQueryCount(newCount);
-      localStorage.setItem(`queryCount_${currentUser.uid}`, newCount.toString());
-    }
   };
 
   const handleSubmit = async (values: PromptFormValues) => {
@@ -193,7 +138,7 @@ export default function Home() {
     setIsSearching(false);
 
     if (shouldPerformSearch) { 
-      if (!checkQueryLimit('search')) return;
+      if (!checkUserIsLoggedIn('search')) return;
       actionTakenOverall = true;
       setIsSearching(true);
       try {
@@ -201,9 +146,7 @@ export default function Home() {
         const resultFromFlow = await performWebSearch(searchInput);
         interactionPayload.aiSearchResults = resultFromFlow.results;
         interactionPayload.aiSearchSummary = resultFromFlow.summary;
-        if (resultFromFlow.summary || (resultFromFlow.results && resultFromFlow.results.length > 0)) {
-          incrementQueryCount();
-        } else {
+        if (!resultFromFlow.summary && (!resultFromFlow.results || resultFromFlow.results.length === 0)) {
            localError = "Nenhum resultado encontrado ou a pesquisa não produziu um resumo.";
            interactionPayload.aiSearchError = localError;
         }
@@ -215,7 +158,7 @@ export default function Home() {
         setIsSearching(false);
       }
     } else if (shouldInvestigate && currentConsultationType) {
-      if (!checkQueryLimit('investigation')) return;
+      if (!checkUserIsLoggedIn('investigation')) return;
       actionTakenOverall = true;
       setIsInvestigating(true);
       interactionPayload.consultationType = currentConsultationType;
@@ -223,7 +166,6 @@ export default function Home() {
         const resultFromService = await performInvestigation(currentPrompt, currentConsultationType);
         if (resultFromService.success && resultFromService.data) {
           interactionPayload.aiInvestigationData = resultFromService.data;
-          incrementQueryCount();
         } else if (resultFromService.error) {
           localError = resultFromService.error;
           interactionPayload.aiInvestigationError = resultFromService.error;
@@ -252,14 +194,13 @@ export default function Home() {
         (shouldPerformSearch && (interactionPayload.aiSearchSummary === undefined && (!interactionPayload.aiSearchResults || interactionPayload.aiSearchResults.length === 0)) && interactionPayload.aiSearchError === undefined);
 
     if (shouldGenerateTextFallback) {
-        if (!checkQueryLimit('text')) return;
+        if (!checkUserIsLoggedIn('text')) return;
         actionTakenOverall = true;
         setIsLoadingText(true);
         try {
             const textInput: GenerateTextInput = { prompt: currentPrompt };
             const aiTextResult = await generateText(textInput);
             interactionPayload.aiTextResponse = aiTextResult.generatedText;
-            if(!shouldInvestigate && !shouldPerformSearch && !shouldGenerateImage) incrementQueryCount();
         } catch (e) {
             const err = e instanceof Error ? e : new Error(String(e));
             localError = err.message;
@@ -270,14 +211,13 @@ export default function Home() {
     }
 
     if (shouldGenerateImage && !shouldInvestigate && !shouldPerformSearch) {
-      if (!checkQueryLimit('image')) return;
+      if (!checkUserIsLoggedIn('image')) return;
       actionTakenOverall = true;
       setIsImageLoading(true);
       try {
         const imageInput: GenerateImageInput = { prompt: currentPrompt };
         const imageResult = await generateImage(imageInput);
         interactionPayload.aiImageUri = imageResult.imageDataUri;
-        incrementQueryCount(); 
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e));
         localError = err.message;
@@ -357,14 +297,6 @@ export default function Home() {
       <div className="flex flex-1 w-full overflow-hidden">
         <Sidebar collapsible="icon" variant="sidebar" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
            <SidebarHeader className="p-3 pb-2 flex flex-col gap-2">
-             {currentUser && (
-                <div className="text-xs text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">
-                    {currentQueryLimit !== ADMIN_DONO_QUERY_LIMIT ? 
-                      `Consultas restantes: ${currentQueryLimit - queryCount} / ${currentQueryLimit}` :
-                      "Consultas: Ilimitadas"
-                    } {userDisplayRole}
-                </div>
-             )}
              <Button
                 variant="outline"
                 size="sm"
@@ -377,19 +309,6 @@ export default function Home() {
               </Button>
            </SidebarHeader>
           <SidebarContent className="flex flex-col flex-1 p-0">
-            {(currentUser?.role === 'admin' || currentUser?.role === 'dono') && !authLoading && (
-              <div className="p-2 border-b border-sidebar-border">
-                <Link href="/admin" passHref>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start h-auto py-2 px-3 text-left rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  >
-                    <ShieldCheck className="mr-2 h-4 w-4 text-sidebar-primary flex-shrink-0" />
-                    <span className="group-data-[collapsible=icon]:hidden">Painel Admin</span>
-                  </Button>
-                </Link>
-              </div>
-            )}
             <div className="flex-1 overflow-y-auto"> 
               {authLoading ? (
                   <div className="flex flex-col items-center justify-center h-full p-4">
