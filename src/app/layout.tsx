@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <head>
-        <link rel="icon" href="https://files.catbox.moe/l355gg.ico" type="image/jpeg" sizes="any" />
+       <link rel="icon" href="https://files.catbox.moe/l355gg.ico">
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <AuthProvider> 
