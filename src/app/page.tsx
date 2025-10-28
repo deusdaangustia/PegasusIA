@@ -354,7 +354,7 @@ export default function Home() {
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       <Header />
-      <div className="flex flex-1 w-full md:grid md:grid-cols-[auto_1fr] overflow-hidden">
+      <div className="flex flex-1 w-full overflow-hidden">
         <Sidebar collapsible="icon" variant="sidebar" className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
            <SidebarHeader className="p-3 pb-2 flex flex-col gap-2">
              {currentUser && (
@@ -445,5 +445,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
