@@ -12,7 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 import { Loader2, Trash2, ShieldAlert, UserCog, Ban } from 'lucide-react';
 import type { AdminPanelUser, UserRole } from '@/types/user';
-import { getAllUsers, updateUserRole, deleteUser, banUser, CHATS_COLLECTION } from '@/services/adminService';
+import { getAllUsers, updateUserRole, deleteUser, banUser } from '@/services/adminService';
+import { CHATS_COLLECTION } from '@/services/chatHistoryService';
 import { Timestamp } from 'firebase/firestore';
 
 const OWNER_ROLE: UserRole = "dono";
@@ -316,7 +317,7 @@ service cloud.firestore {
                       resource.data.role != 'dono';
     }
 
-    match /PegasusChatsV1/{chatId} {
+    match /${CHATS_COLLECTION}/{chatId} {
       allow create: if request.auth != null && 
                        request.auth.uid == request.resource.data.userId;
       
@@ -329,10 +330,10 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         allow create: if request.auth != null &&
-                         request.auth.uid == get(/databases/$(database)/documents/PegasusChatsV1/$(chatId)).data.userId;
+                         request.auth.uid == get(/databases/$(database)/documents/${CHATS_COLLECTION}/$(chatId)).data.userId;
 
         allow read: if request.auth != null &&
-                       request.auth.uid == get(/databases/$(database)/documents/PegasusChatsV1/$(chatId)).data.userId;
+                       request.auth.uid == get(/databases/$(database)/documents/${CHATS_COLLECTION}/$(chatId)).data.userId;
         
         allow delete: if request.auth != null && 
                         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
@@ -347,3 +348,5 @@ service cloud.firestore {
     </div>
   );
 }
+
+    
