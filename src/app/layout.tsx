@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: 'Pegasus v1',
   description: 'Interaja com a IA Pegasus v1 e veja seu histórico de conversas.',
   icons: {
-    icon: 'https://files.catbox.moe/mm2ril.jpg', 
+    icon: 'https://files.catbox.moe/l355gg.ico', 
   },
 };
 
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <head>
-        <link rel="icon" href="https://files.catbox.moe/mm2ril.jpg" type="image/jpeg" sizes="any" />
+        <link rel="icon" href="https://files.catbox.moe/l355gg.ico" type="image/jpeg" sizes="any" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <AuthProvider> 
