@@ -1,0 +1,52 @@
+
+export interface ConsultationOption {
+  value: string;
+  label: string;
+  apiPath?: string;
+}
+
+export const consultationOptions: ConsultationOption[] = [
+  { value: 'nome', label: 'Nome Completo', apiPath: 'bigdata/nome' },
+  { value: 'nome2', label: 'Nome Completo (Alternativa 2)', apiPath: 'bigdata/nome2' },
+  { value: 'nome3', label: 'Nome Completo (Alternativa 3)', apiPath: 'bigdata/nome3' },
+  { value: 'nome4', label: 'Nome Completo (Alternativa 4)', apiPath: 'bigdata/nome4' },
+  { value: 'cpf', label: 'CPF', apiPath: 'bigdata/cpf' },
+  { value: 'cpf2', label: 'CPF (Alternativa 2)', apiPath: 'bigdata/cpf2' },
+  { value: 'cpf3', label: 'CPF (Alternativa 3)', apiPath: 'bigdata/cpf3' },
+  { value: 'cpf4', label: 'CPF (Alternativa 4)', apiPath: 'bigdata/cpf4' },
+  { value: 'cpf5', label: 'CPF (Alternativa 5)', apiPath: 'bigdata/cpf5' },
+  { value: 'telefone', label: 'Telefone Celular/Fixo', apiPath: 'bigdata/telefone' },
+  { value: 'telefone2', label: 'Telefone (Alternativa 2)', apiPath: 'bigdata/telefone2' },
+  { value: 'telefonefixo', label: 'Telefone Fixo (Específico)', apiPath: 'telefonefixo' },
+  { value: 'pfix', label: 'Telefone Fixo (Alternativa)', apiPath: 'pfix' },
+  { value: 'placa', label: 'Placa Veicular', apiPath: 'placa' },
+  { value: 'cnpj', label: 'CNPJ', apiPath: 'bigdata/cnpj' },
+  { value: 'email', label: 'Email', apiPath: 'bigdata/email' },
+  { value: 'cep', label: 'CEP', apiPath: 'cep' },
+  { value: 'site', label: 'Site/Domínio', apiPath: 'site' },
+  { value: 'dominio', label: 'Domínio (Alternativa Site)', apiPath: 'dominio' },
+  { value: 'internet', label: 'Internet (Alternativa Site)', apiPath: 'internet' },
+  { value: 'titulo', label: 'Título de Eleitor', apiPath: 'titulo' },
+  { value: 'cns', label: 'CNS (Cartão Nacional de Saúde)', apiPath: 'cns' },
+  { value: 'cns2', label: 'CNS (Alternativa 2)', apiPath: 'cns2' },
+  { value: 'vacina', label: 'Vacina (via CNS)', apiPath: 'vacina' },
+  { value: 'chassi', label: 'Chassi Veicular', apiPath: 'chassi' },
+  { value: 'motor', label: 'Motor Veicular', apiPath: 'motor' },
+  { value: 'bin', label: 'BIN de Cartão', apiPath: 'bin' },
+  { value: 'score', label: 'Score de Crédito (via CPF)', apiPath: 'score' },
+  { value: 'beneficios', label: 'Benefícios (via CPF)', apiPath: 'beneficios' },
+  { value: 'impostos', label: 'Impostos (via CPF)', apiPath: 'impostos' },
+  { value: 'compras', label: 'Histórico de Compras (via CPF)', apiPath: 'compras' },
+  { value: 'cnh', label: 'CNH (Carteira de Habilitação)', apiPath: 'cnh' },
+  { value: 'nascimento', label: 'Data de Nascimento (DD/MM/AAAA)', apiPath: 'nascimento' },
+  { value: 'rg', label: 'RG', apiPath: 'rg' },
+  { value: 'rg2', label: 'RG (Alternativa 2)', apiPath: 'rg2' },
+  { value: 'parentes', label: 'Parentes (por Nome)', apiPath: 'parentes' },
+  { value: 'mae', label: 'Nome da Mãe (Consultar por Nome)', apiPath: 'mae' },
+  { value: 'pai', label: 'Nome do Pai (Consultar por Nome)', apiPath: 'pai' },
+  { value: 'funcionarios', label: 'Funcionários (por Nome da Empresa)', apiPath: 'funcionarios' },
+  { value: 'senha', label: 'Busca "Senhas" (por Nome)', apiPath: 'senha' }, 
+  { value: 'vizinhos', label: 'Vizinhos (por CEP)', apiPath: 'vizinhos' },
+  { value: 'correios', label: 'Correios (Cód. Rastreio)', apiPath: 'correios' },
+  { value: 'radar', label: 'Radar (por Placa)', apiPath: 'radar' },
+].sort((a, b) => a.label.localeCompare(b.label));

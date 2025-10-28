@@ -1,0 +1,10 @@
+
+{
+  "functions": {
+    "app/page.js": {
+      "maxDuration": 120
+    }
+  }
+}
+
+    

@@ -1,0 +1,53 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Chat History Rules
+    // Users can read and create their own chat messages.
+    match /chatHistoryDivineAnguishV1/{messageId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Ensure that the userId in the document being created matches the authenticated user's ID.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Disallow updates or deletes by users for now to keep chat history immutable by default.
+      // Admins could be granted these permissions if needed in a more complex rule.
+      allow update, delete: if false;
+    }
+
+    // User Profile and Roles Rules
+    match /users/{userId} {
+      // Allow authenticated user to read their own document.
+      // Admins can read any user document (implicitly covered by a more general admin rule if you add one for /users/*, or handle in backend).
+      // For simplicity here, we focus on user's own access and admin updates.
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow a user to create their own document (e.g., on signup).
+      // The document ID {userId} must match the authenticated user's UID.
+      // The 'uid' field within the document must also match.
+      allow create: if request.auth != null &&
+                       request.auth.uid == userId &&
+                       request.resource.data.uid == request.auth.uid;
+                       // This rule allows the AuthContext to set initial roles,
+                       // including ['normal', 'admin'] for 'deusdaangustia@proton.me' upon creation.
+
+      // Allow updates under specific conditions:
+      allow update: if request.auth != null &&
+                       (
+                         ( // Condition 1: User is updating their own document
+                           request.auth.uid == userId &&
+                           // Crucially, prevent user from changing their own 'roles' array.
+                           request.resource.data.roles == resource.data.roles &&
+                           // Also ensure UID field (if present and part of update) is not changed by the user.
+                           (!('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid)
+                         ) ||
+                         ( // Condition 2: User making the request is an admin (can update anything, including roles)
+                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin'])
+                         )
+                       );
+
+      // Only admins can delete user documents.
+      allow delete: if request.auth != null &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin']);
+    }
+  }
+}
